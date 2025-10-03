@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: maybe_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: maybe_web
+    command: bash -c "bundle exec rails db:prepare && bundle exec puma -C config/puma.rb"
+    volumes:
+      - .:/app
+    environment:
+      - SELF_HOSTED=${SELF_HOSTED}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - APP_DOMAIN=${APP_DOMAIN}
+      - PORT=3000
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+
+volumes:
+  db_data:
